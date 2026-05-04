@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#0f172a;color:#e2e8f0;direction:rtl;min-height:100vh}
+  :root{
+    --teal:#14b8a6;--teal-d:#0d9488;--teal-l:#99f6e4;
+    --blue:#3b82f6;--blue-d:#2563eb;--blue-l:#bfdbfe;
+    --amber:#f59e0b;--amber-d:#d97706;--amber-l:#fde68a;
+    --rose:#f43f5e;--rose-d:#e11d48;--rose-l:#fecdd3;
+    --violet:#8b5cf6;--violet-d:#7c3aed;--violet-l:#ddd6fe;
+    --green:#22c55e;--green-d:#16a34a;--green-l:#bbf7d0;
+    --slate:#475569;--card:#1e293b;--card2:#263047;--border:#334155
+  }
+  .screen{display:none;animation:fadeIn .35s ease}
+  .screen.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* HEADER */
+  .top-bar{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+  .logo-area{display:flex;align-items:center;gap:10px}
+  .logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;font-size:18px}
+  .logo-text{font-size:15px;font-weight:700;color:var(--teal-l)}
+  .logo-sub{font-size:11px;color:#94a3b8;margin-top:1px}
+  .score-badge{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--amber-l)}
+
+  /* INTRO */
+  .intro-wrap{max-width:740px;margin:40px auto;padding:0 20px}
+  .intro-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 36px;text-align:center}
+  .intro-icon{font-size:52px;margin-bottom:16px}
+  .intro-title{font-size:24px;font-weight:800;color:#f1f5f9;margin-bottom:8px}
+  .intro-desc{font-size:15px;color:#94a3b8;line-height:1.7;margin-bottom:28px}
+  .intro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+  .intro-stat{background:#0f172a;border:1px solid var(--border);border-radius:12px;padding:16px}
+  .intro-stat-n{font-size:26px;font-weight:800;color:var(--teal)}
+  .intro-stat-l{font-size:12px;color:#64748b;margin-top:3px}
+  .btn-start{background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;border:none;padding:14px 36px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:.2s;letter-spacing:.5px}
+  .btn-start:hover{transform:scale(1.03);filter:brightness(1.1)}
+
+  /* QUIZ LAYOUT */
+  .quiz-wrap{max-width:820px;margin:0 auto;padding:20px}
+  .progress-bar-wrap{background:var(--card);border-radius:20px;height:6px;margin-bottom:20px;overflow:hidden}
+  .progress-bar-inner{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:20px;transition:width .5s ease}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .q-counter{font-size:13px;color:#64748b}
+  .q-type-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;letter-spacing:.5px}
+  .badge-mcq{background:#1e3a5f;color:var(--blue-l)}
+  .badge-drag{background:#1c3329;color:var(--green-l)}
+  .badge-match{background:#2e1f4e;color:var(--violet-l)}
+  .badge-multi{background:#3b1e06;color:var(--amber-l)}
+  .q-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px 32px;margin-bottom:18px}
+  .q-num{font-size:12px;color:#64748b;margin-bottom:6px;font-weight:600}
+  .q-text{font-size:17px;font-weight:700;color:#f1f5f9;line-height:1.6}
+  .q-hint{font-size:13px;color:#94a3b8;margin-top:8px}
+
+  /* MCQ */
+  .options-grid{display:grid;gap:10px;margin-top:16px}
+  .opt-btn{background:#0f172a;border:1.5px solid var(--border);border-radius:12px;padding:13px 18px;text-align:right;cursor:pointer;font-size:14px;color:#cbd5e1;transition:.18s;display:flex;align-items:center;gap:10px}
+  .opt-btn:hover:not(.locked){border-color:var(--teal);color:#f1f5f9;background:#172033}
+  .opt-btn.selected{border-color:var(--blue);background:#172033;color:#f1f5f9}
+  .opt-btn.correct{border-color:var(--green);background:#0c2217;color:var(--green-l)}
+  .opt-btn.wrong{border-color:var(--rose);background:#220d14;color:var(--rose-l)}
+  .opt-circle{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:#94a3b8}
+  .opt-btn.selected .opt-circle{border-color:var(--blue);color:var(--blue-l);background:#172a4a}
+  .opt-btn.correct .opt-circle{border-color:var(--green);color:var(--green-l);background:#0c2217}
+  .opt-btn.wrong .opt-circle{border-color:var(--rose);color:var(--rose-l);background:#220d14}
+
+  /* MULTI SELECT */
+  .multi-note{font-size:12px;color:var(--amber);margin-top:6px}
+
+  /* DRAG SORT */
+  .drag-container{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .drag-item{background:#0f172a;border:1.5px solid var(--border);border-radius:11px;padding:12px 16px;cursor:grab;display:flex;align-items:center;gap:12px;font-size:14px;color:#cbd5e1;user-select:none;transition:.15s}
+  .drag-item:hover{border-color:var(--teal);color:#f1f5f9}
+  .drag-item.dragging{opacity:.4;transform:scale(.97)}
+  .drag-item.drag-over{border-color:var(--amber);background:#1a150a}
+  .drag-item.correct-pos{border-color:var(--green);background:#0c2217;color:var(--green-l)}
+  .drag-item.wrong-pos{border-color:var(--rose);background:#220d14;color:var(--rose-l)}
+  .drag-handle{color:#475569;font-size:16px;flex-shrink:0}
+  .drag-num{width:26px;height:26px;border-radius:50%;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#94a3b8;flex-shrink:0}
+
+  /* MATCHING */
+  .match-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .match-col-title{font-size:11px;font-weight:700;color:#64748b;text-align:center;margin-bottom:6px;letter-spacing:.5px}
+  .match-item{background:#0f172a;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:#cbd5e1;cursor:pointer;transition:.15s;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center}
+  .match-item:hover:not(.locked){border-color:var(--teal);color:#f1f5f9}
+  .match-item.active{border-color:var(--violet);background:#1a1230;color:var(--violet-l)}
+  .match-item.paired{border-color:var(--teal);background:#072020;color:var(--teal-l)}
+  .match-item.correct{border-color:var(--green);background:#0c2217;color:var(--green-l)}
+  .match-item.wrong{border-color:var(--rose);background:#220d14;color:var(--rose-l)}
+  .match-line{grid-column:1/-1;font-size:12px;color:#64748b;text-align:center;margin-top:4px}
+
+  /* FEEDBACK */
+  .feedback-box{border-radius:12px;padding:14px 18px;margin-top:14px;font-size:14px;line-height:1.6;display:none}
+  .feedback-box.correct{background:#0c2217;border:1px solid var(--green);color:var(--green-l)}
+  .feedback-box.wrong{background:#220d14;border:1px solid var(--rose);color:var(--rose-l)}
+  .feedback-box.info{background:#172033;border:1px solid var(--blue);color:var(--blue-l)}
+
+  /* ACTION BUTTONS */
+  .action-row{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap}
+  .btn-check{background:var(--teal);color:#fff;border:none;padding:11px 26px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
+  .btn-check:hover{background:var(--teal-d)}
+  .btn-check:disabled{background:var(--slate);cursor:not-allowed}
+  .btn-next{background:var(--card2);border:1.5px solid var(--border);color:#f1f5f9;padding:11px 26px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;display:none}
+  .btn-next:hover{border-color:var(--teal);color:var(--teal-l)}
+  .btn-hint{background:transparent;border:1px solid var(--border);color:#64748b;padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;transition:.15s}
+  .btn-hint:hover{border-color:var(--amber);color:var(--amber)}
+
+  /* RESULTS */
+  .results-wrap{max-width:740px;margin:30px auto;padding:0 20px}
+  .results-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 36px}
+  .result-score-circle{width:110px;height:110px;border-radius:50%;margin:0 auto 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px solid var(--teal);font-size:28px;font-weight:800;color:var(--teal)}
+  .result-score-label{font-size:11px;color:#94a3b8;margin-top:2px}
+  .result-title{font-size:20px;font-weight:800;text-align:center;color:#f1f5f9;margin-bottom:6px}
+  .result-sub{font-size:14px;color:#94a3b8;text-align:center;margin-bottom:24px}
+  .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+  .result-stat{background:#0f172a;border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+  .result-stat-n{font-size:22px;font-weight:800}
+  .result-stat-l{font-size:11px;color:#64748b;margin-top:2px}
+  .review-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+  .review-item{background:#0f172a;border-radius:10px;padding:12px 16px;display:flex;align-items:flex-start;gap:12px;font-size:13px}
+  .review-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+  .review-q{color:#cbd5e1;flex:1}
+  .review-status{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;flex-shrink:0}
+  .status-correct{background:#0c2217;color:var(--green-l)}
+  .status-wrong{background:#220d14;color:var(--rose-l)}
+  .btn-retry{background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;border:none;padding:12px 30px;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;display:block;margin:0 auto;transition:.2s}
+  .btn-retry:hover{transform:scale(1.03)}
+
+  /* locked = no pointer */
+  .locked{cursor:default!important}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo-area">
+    <div class="logo-icon">📊</div>
+    <div>
+      <div class="logo-text">اختبار علم البيانات</div>
+      <div class="logo-sub">دورة حياة البيانات — Data Lifecycle</div>
+    </div>
+  </div>
+  <div class="score-badge" id="live-score">النقاط: 0</div>
+</div>
+
+<!-- INTRO SCREEN -->
+<div class="screen active" id="screen-intro">
+  <div class="intro-wrap">
+    <div class="intro-card">
+      <div class="intro-icon">🗄️</div>
+      <div class="intro-title">اختبار تفاعلي: دورة حياة البيانات</div>
+      <div class="intro-desc">قيس قدرتك على تصنيف وترتيب مراحل معالجة البيانات.<br>أسئلة متنوعة بين اختيار متعدد وسحب وإفلات ومطابقة.</div>
+      <div class="intro-grid">
+        <div class="intro-stat"><div class="intro-stat-n">8</div><div class="intro-stat-l">أسئلة</div></div>
+        <div class="intro-stat"><div class="intro-stat-n">80</div><div class="intro-stat-l">درجة كاملة</div></div>
+        <div class="intro-stat"><div class="intro-stat-n">4</div><div class="intro-stat-l">أنواع أسئلة</div></div>
+      </div>
+      <button class="btn-start" onclick="startQuiz()">ابدأ الاختبار</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-wrap">
+    <div class="progress-bar-wrap"><div class="progress-bar-inner" id="prog-bar" style="width:0%"></div></div>
+    <div class="q-meta">
+      <span class="q-counter" id="q-counter">السؤال 1 من 8</span>
+      <span class="q-type-badge" id="q-type-badge"></span>
+    </div>
+    <div id="q-area"></div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div class="screen" id="screen-results">
+  <div class="results-wrap">
+    <div class="results-card">
+      <div class="result-score-circle" id="score-circle">
+        <span id="score-num">0</span>
+        <span class="result-score-label">/ 80</span>
+      </div>
+      <div class="result-title" id="result-title">أداء رائع!</div>
+      <div class="result-sub" id="result-sub"></div>
+      <div class="result-grid">
+        <div class="result-stat"><div class="result-stat-n" id="r-correct" style="color:var(--green)">0</div><div class="result-stat-l">إجابات صحيحة</div></div>
+        <div class="result-stat"><div class="result-stat-n" id="r-wrong" style="color:var(--rose)">0</div><div class="result-stat-l">إجابات خاطئة</div></div>
+        <div class="result-stat"><div class="result-stat-n" id="r-pct" style="color:var(--teal)">0%</div><div class="result-stat-l">النسبة المئوية</div></div>
+      </div>
+      <div class="review-list" id="review-list"></div>
+      <button class="btn-retry" onclick="retryQuiz()">إعادة الاختبار</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    id:1, type:"mcq", points:10,
+    text:"ما أولى مراحل دورة حياة البيانات التي تبدأ بها أي عملية تحليل بيانات؟",
+    badge:"اختيار متعدد", badgeClass:"badge-mcq",
+    options:["تحليل البيانات","جمع البيانات","معالجة البيانات","تخزين البيانات"],
+    correct:1,
+    feedback:"الصواب هو جمع البيانات (Data Collection). لا يمكن البدء بالتحليل أو المعالجة دون أن تتوفر البيانات أولاً من مصادرها."
+  },
+  {
+    id:2, type:"drag", points:10,
+    text:"رتّبي مراحل دورة حياة البيانات الستة بالترتيب الصحيح من الأولى إلى الأخيرة.",
+    badge:"سحب وإفلات", badgeClass:"badge-drag",
+    hint:"تبدأ الدورة بجمع البيانات وتنتهي باتخاذ القرار أو الأرشفة",
+    items:["تحليل البيانات وتفسيرها","تنظيف البيانات ومعالجتها","جمع البيانات","عرض النتائج واتخاذ القرار","تخزين البيانات وتنظيمها","استكشاف البيانات (EDA)"],
+    correctOrder:[2,1,4,5,0,3],
+    feedback:"الترتيب الصحيح: جمع ← تنظيف ← تخزين ← استكشاف ← تحليل ← عرض النتائج. كل مرحلة تُهيئ المدخلات للمرحلة التالية."
+  },
+  {
+    id:3, type:"mcq", points:10,
+    text:"في أي مرحلة من دورة حياة البيانات يتم التعامل مع القيم الناقصة (Missing Values) والمكررة؟",
+    badge:"اختيار متعدد", badgeClass:"badge-mcq",
+    options:["جمع البيانات","الاستكشاف الأولي (EDA)","تنظيف البيانات ومعالجتها","تخزين البيانات"],
+    correct:2,
+    feedback:"تنظيف البيانات (Data Cleaning) هي المرحلة المخصصة لإزالة التكرارات ومعالجة القيم الناقصة وتصحيح الأخطاء قبل الانتقال للتحليل."
+  },
+  {
+    id:4, type:"multi", points:10,
+    text:"اختاري جميع العمليات التي تنتمي إلى مرحلة استكشاف البيانات (EDA):",
+    badge:"اختيار متعدد — أكثر من إجابة", badgeClass:"badge-multi",
+    options:["رسم الرسوم البيانية التوزيعية","حذف صف من قاعدة البيانات","حساب الوسط الحسابي والانحراف المعياري","كتابة تقرير النتائج النهائي","فحص القيم الشاذة (Outliers)","ضغط الملفات وأرشفتها"],
+    correctSet:[0,2,4],
+    feedback:"EDA تشمل: الرسوم البيانية التوزيعية + حساب المقاييس الإحصائية + فحص القيم الشاذة. الحذف ينتمي لمرحلة التنظيف، والتقرير للعرض، والأرشفة للتخزين."
+  },
+  {
+    id:5, type:"drag", points:10,
+    text:"رتّبي الخطوات الداخلية لمرحلة معالجة وتحضير البيانات بالترتيب المنطقي الصحيح:",
+    badge:"سحب وإفلات", badgeClass:"badge-drag",
+    hint:"ابدأ بتحديد المشكلة ثم عمليات التحويل",
+    items:["التحقق من جودة البيانات النهائية","تحويل أنواع البيانات (Type Casting)","تعريف المتغيرات والميزات المطلوبة","تطبيع البيانات وتوحيد المقاييس","معالجة القيم الناقصة والمكررة"],
+    correctOrder:[2,4,1,3,0],
+    feedback:"المنطق الصحيح: تعريف المتغيرات ← معالجة الناقص ← تحويل الأنواع ← التطبيع ← التحقق من الجودة."
+  },
+  {
+    id:6, type:"match", points:10,
+    text:"طابقي كل مرحلة في دورة حياة البيانات مع وصفها الصحيح:",
+    badge:"مطابقة", badgeClass:"badge-match",
+    leftItems:["جمع البيانات","تنظيف البيانات","استكشاف البيانات","عرض النتائج"],
+    rightItems:[
+      "تحويل النتائج إلى رسوم ولوحات بيانية للمتخذي القرار",
+      "الحصول على البيانات من APIs وقواعد البيانات والاستبيانات",
+      "حساب المقاييس الإحصائية وفحص العلاقات بين المتغيرات",
+      "إزالة التكرارات وتصحيح الأخطاء وملء الفراغات"
+    ],
+    correctPairs:{0:1, 1:3, 2:2, 3:0},
+    feedback:"جمع ↔ الحصول من المصادر | تنظيف ↔ إزالة التكرارات | استكشاف ↔ حساب المقاييس | عرض ↔ الرسوم لمتخذي القرار"
+  },
+  {
+    id:7, type:"mcq", points:10,
+    text:"أيٌّ من الأدوات التالية يُستخدم تحديداً في مرحلة تخزين البيانات وإدارتها؟",
+    badge:"اختيار متعدد", badgeClass:"badge-mcq",
+    options:["Matplotlib","MySQL / PostgreSQL","Scikit-learn","Jupyter Notebook"],
+    correct:1,
+    feedback:"MySQL و PostgreSQL هما نظامان لإدارة قواعد البيانات (RDBMS) تُستخدمان لتخزين البيانات واسترجاعها. أما Matplotlib فللرسم، وScikit-learn للتعلم الآلي، وJupyter للتحليل."
+  },
+  {
+    id:8, type:"mcq", points:10,
+    text:"ما الهدف الرئيسي من مرحلة 'عرض النتائج واتخاذ القرار' في دورة حياة البيانات؟",
+    badge:"اختيار متعدد", badgeClass:"badge-mcq",
+    options:[
+      "إعادة تنظيف البيانات وتدقيقها",
+      "تخزين النتائج في قاعدة بيانات دائمة",
+      "ترجمة النتائج إلى رؤى مفهومة تدعم اتخاذ قرارات تجارية أو علمية",
+      "تجميع مزيد من البيانات الخام"
+    ],
+    correct:2,
+    feedback:"مرحلة العرض تهدف إلى تحويل النتائج التحليلية إلى رؤى واضحة (Insights) تُمكّن أصحاب القرار من اتخاذ إجراءات مبنية على البيانات."
+  }
+];
+
+let qIndex = 0, totalScore = 0, answers = [], dragOrder = [], selectedOpts = new Set(), matchState = {};
+let hintVisible = false, checked = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  qIndex = 0; totalScore = 0; answers = []; showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function updateProgress() {
+  document.getElementById('prog-bar').style.width = ((qIndex) / questions.length * 100) + '%';
+  document.getElementById('q-counter').textContent = `السؤال ${qIndex+1} من ${questions.length}`;
+  document.getElementById('live-score').textContent = `النقاط: ${totalScore}`;
+}
+
+function renderQuestion() {
+  const q = questions[qIndex];
+  updateProgress();
+  checked = false; hintVisible = false;
+  const badge = document.getElementById('q-type-badge');
+  badge.textContent = q.badge; badge.className = 'q-type-badge ' + q.badgeClass;
+
+  if (q.type === 'mcq') renderMCQ(q);
+  else if (q.type === 'drag') renderDrag(q);
+  else if (q.type === 'multi') renderMulti(q);
+  else if (q.type === 'match') renderMatch(q);
+}
+
+function renderMCQ(q) {
+  const area = document.getElementById('q-area');
+  const letters = ['أ','ب','ج','د'];
+  area.innerHTML = `
+    <div class="q-card">
+      <div class="q-num">السؤال ${qIndex+1}</div>
+      <div class="q-text">${q.text}</div>
+    </div>
+    <div class="options-grid" id="opts"></div>
+    <div class="feedback-box" id="fb"></div>
+    <div class="action-row" style="margin-top:14px">
+      <button class="btn-check" id="btn-check" disabled onclick="checkMCQ()">تحقق من الإجابة</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()">السؤال التالي ←</button>
+      <button class="btn-hint" onclick="showHint()">تلميح</button>
+    </div>`;
+  const opts = document.getElementById('opts');
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'opt-btn';
+    btn.dataset.i = i;
+    btn.innerHTML = `<div class="opt-circle">${letters[i]}</div><span>${opt}</span>`;
+    btn.onclick = () => {
+      if (checked) return;
+      opts.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('btn-check').disabled = false;
+    };
+    opts.appendChild(btn);
+  });
+}
+
+function checkMCQ() {
+  const q = questions[qIndex]; checked = true;
+  const opts = document.querySelectorAll('.opt-btn');
+  const sel = document.querySelector('.opt-btn.selected');
+  if (!sel) return;
+  const idx = parseInt(sel.dataset.i);
+  opts.forEach(b => b.classList.add('locked'));
+  const correct = idx === q.correct;
+  if (correct) { sel.classList.add('correct'); totalScore += q.points; answers.push({correct:true,text:q.text}); }
+  else {
+    sel.classList.add('wrong');
+    opts[q.correct].classList.add('correct');
+    answers.push({correct:false,text:q.text});
+  }
+  showFeedback(q.feedback, correct);
+  document.getElementById('btn-check').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'inline-block';
+  updateProgress();
+}
+
+function renderMulti(q) {
+  const area = document.getElementById('q-area');
+  const letters = ['أ','ب','ج','د','هـ','و'];
+  selectedOpts = new Set();
+  area.innerHTML = `
+    <div class="q-card">
+      <div class="q-num">السؤال ${qIndex+1}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="multi-note">⚠ اختاري جميع الإجابات الصحيحة قبل الضغط على تحقق</div>
+    </div>
+    <div class="options-grid" id="opts"></div>
+    <div class="feedback-box" id="fb"></div>
+    <div class="action-row" style="margin-top:14px">
+      <button class="btn-check" id="btn-check" disabled onclick="checkMulti()">تحقق من الإجابة</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()">السؤال التالي ←</button>
+    </div>`;
+  const opts = document.getElementById('opts');
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'opt-btn';
+    btn.dataset.i = i;
+    btn.innerHTML = `<div class="opt-circle">${letters[i]}</div><span>${opt}</span>`;
+    btn.onclick = () => {
+      if (checked) return;
+      if (selectedOpts.has(i)) { selectedOpts.delete(i); btn.classList.remove('selected'); }
+      else { selectedOpts.add(i); btn.classList.add('selected'); }
+      document.getElementById('btn-check').disabled = selectedOpts.size === 0;
+    };
+    opts.appendChild(btn);
+  });
+}
+
+function checkMulti() {
+  const q = questions[qIndex]; checked = true;
+  const opts = document.querySelectorAll('.opt-btn');
+  opts.forEach(b => b.classList.add('locked'));
+  let correct = selectedOpts.size === q.correctSet.length && q.correctSet.every(i => selectedOpts.has(i));
+  opts.forEach(b => {
+    const i = parseInt(b.dataset.i);
+    if (q.correctSet.includes(i)) b.classList.add('correct');
+    else if (selectedOpts.has(i)) b.classList.add('wrong');
+  });
+  if (correct) { totalScore += q.points; answers.push({correct:true,text:q.text}); }
+  else answers.push({correct:false,text:q.text});
+  showFeedback(q.feedback, correct);
+  document.getElementById('btn-check').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'inline-block';
+  updateProgress();
+}
+
+function renderDrag(q) {
+  dragOrder = q.items.map((_, i) => i);
+  shuffleArr(dragOrder);
+  const area = document.getElementById('q-area');
+  area.innerHTML = `
+    <div class="q-card">
+      <div class="q-num">السؤال ${qIndex+1}</div>
+      <div class="q-text">${q.text}</div>
+      ${q.hint ? `<div class="q-hint">💡 ${q.hint}</div>` : ''}
+    </div>
+    <div class="drag-container" id="drag-list"></div>
+    <div class="feedback-box" id="fb"></div>
+    <div class="action-row" style="margin-top:14px">
+      <button class="btn-check" id="btn-check" onclick="checkDrag()">تحقق من الترتيب</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()">السؤال التالي ←</button>
+    </div>`;
+  renderDragItems(q);
+}
+
+function renderDragItems(q) {
+  const list = document.getElementById('drag-list');
+  list.innerHTML = '';
+  dragOrder.forEach((itemIdx, pos) => {
+    const div = document.createElement('div');
+    div.className = 'drag-item';
+    div.dataset.pos = pos;
+    div.innerHTML = `<div class="drag-num">${pos+1}</div><span style="flex:1">${q.items[itemIdx]}</span><div class="drag-handle">⠿</div>`;
+    div.draggable = true;
+    div.ondragstart = e => { e.dataTransfer.setData('text/plain', pos); div.classList.add('dragging'); };
+    div.ondragend = () => div.classList.remove('dragging');
+    div.ondragover = e => { e.preventDefault(); div.classList.add('drag-over'); };
+    div.ondragleave = () => div.classList.remove('drag-over');
+    div.ondrop = e => {
+      e.preventDefault(); div.classList.remove('drag-over');
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      const to = pos;
+      if (from !== to) { [dragOrder[from], dragOrder[to]] = [dragOrder[to], dragOrder[from]]; renderDragItems(q); }
+    };
+    list.appendChild(div);
+  });
+}
+
+function checkDrag() {
+  const q = questions[qIndex]; checked = true;
+  const items = document.querySelectorAll('.drag-item');
+  items.forEach(item => item.draggable = false);
+  let allCorrect = true;
+  dragOrder.forEach((itemIdx, pos) => {
+    const item = items[pos];
+    if (q.correctOrder[pos] === itemIdx) item.classList.add('correct-pos');
+    else { item.classList.add('wrong-pos'); allCorrect = false; }
+  });
+  if (allCorrect) { totalScore += q.points; answers.push({correct:true,text:q.text}); }
+  else answers.push({correct:false,text:q.text});
+  showFeedback(q.feedback, allCorrect);
+  document.getElementById('btn-check').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'inline-block';
+  updateProgress();
+}
+
+function renderMatch(q) {
+  matchState = { leftSel: null, pairs: {} };
+  const area = document.getElementById('q-area');
+  area.innerHTML = `
+    <div class="q-card">
+      <div class="q-num">السؤال ${qIndex+1}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="q-hint">💡 اضغطي على عنصر من اليمين ثم على عنصر من اليسار لمطابقتهما</div>
+    </div>
+    <div class="match-wrap">
+      <div><div class="match-col-title">المراحل</div><div id="left-col"></div></div>
+      <div><div class="match-col-title">التعريفات</div><div id="right-col"></div></div>
+    </div>
+    <div class="feedback-box" id="fb"></div>
+    <div class="action-row" style="margin-top:14px">
+      <button class="btn-check" id="btn-check" disabled onclick="checkMatch()">تحقق من المطابقة</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()">السؤال التالي ←</button>
+    </div>`;
+
+  const rightIdxs = q.rightItems.map((_, i) => i);
+  shuffleArr(rightIdxs);
+
+  const lc = document.getElementById('left-col');
+  const rc = document.getElementById('right-col');
+
+  q.leftItems.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    div.dataset.side = 'left'; div.dataset.i = i;
+    div.textContent = item;
+    div.onclick = () => handleMatchClick('left', i, div);
+    lc.appendChild(div);
+  });
+
+  rightIdxs.forEach((origIdx) => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    div.dataset.side = 'right'; div.dataset.i = origIdx;
+    div.textContent = q.rightItems[origIdx];
+    div.onclick = () => handleMatchClick('right', origIdx, div);
+    rc.appendChild(div);
+  });
+}
+
+function handleMatchClick(side, idx, el) {
+  if (checked) return;
+  const q = questions[qIndex];
+  if (side === 'left') {
+    document.querySelectorAll('.match-item[data-side="left"]').forEach(e => e.classList.remove('active'));
+    if (matchState.leftSel === idx) { matchState.leftSel = null; return; }
+    matchState.leftSel = idx; el.classList.add('active');
+  } else {
+    if (matchState.leftSel === null) return;
+    const li = matchState.leftSel;
+    const alreadyPairedRight = Object.values(matchState.pairs).find(v => v === idx);
+    const alreadyPairedLeft = matchState.pairs[li];
+    if (alreadyPairedLeft !== undefined) {
+      const oldRightEl = document.querySelector(`.match-item[data-side="right"][data-i="${alreadyPairedLeft}"]`);
+      if (oldRightEl) oldRightEl.classList.remove('paired');
+    }
+    if (alreadyPairedRight !== undefined) {
+      const oldLeftKey = Object.keys(matchState.pairs).find(k => matchState.pairs[k] === idx);
+      delete matchState.pairs[oldLeftKey];
+      const oldLeftEl = document.querySelector(`.match-item[data-side="left"][data-i="${oldLeftKey}"]`);
+      if (oldLeftEl) { oldLeftEl.classList.remove('paired','active'); }
+    }
+    matchState.pairs[li] = idx;
+    const leftEl = document.querySelector(`.match-item[data-side="left"][data-i="${li}"]`);
+    if (leftEl) { leftEl.classList.remove('active'); leftEl.classList.add('paired'); }
+    el.classList.add('paired');
+    matchState.leftSel = null;
+    const paired = Object.keys(matchState.pairs).length;
+    document.getElementById('btn-check').disabled = paired < q.leftItems.length;
+  }
+}
+
+function checkMatch() {
+  const q = questions[qIndex]; checked = true;
+  let allCorrect = true;
+  document.querySelectorAll('.match-item').forEach(el => el.classList.add('locked'));
+  q.leftItems.forEach((_, li) => {
+    const myRight = matchState.pairs[li];
+    const leftEl = document.querySelector(`.match-item[data-side="left"][data-i="${li}"]`);
+    const rightEl = document.querySelector(`.match-item[data-side="right"][data-i="${myRight}"]`);
+    if (myRight === q.correctPairs[li]) {
+      leftEl && leftEl.classList.add('correct');
+      rightEl && rightEl.classList.add('correct');
+    } else {
+      leftEl && leftEl.classList.add('wrong');
+      rightEl && rightEl.classList.add('wrong');
+      allCorrect = false;
+    }
+  });
+  if (allCorrect) { totalScore += q.points; answers.push({correct:true,text:q.text}); }
+  else answers.push({correct:false,text:q.text});
+  showFeedback(q.feedback, allCorrect);
+  document.getElementById('btn-check').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'inline-block';
+  updateProgress();
+}
+
+function showFeedback(text, correct) {
+  const fb = document.getElementById('fb');
+  fb.className = 'feedback-box ' + (correct ? 'correct' : 'wrong');
+  fb.innerHTML = (correct ? '✓ إجابة صحيحة! ' : '✗ إجابة خاطئة. ') + text;
+  fb.style.display = 'block';
+}
+
+function showHint() {
+  if (hintVisible) return;
+  hintVisible = true;
+  const q = questions[qIndex];
+  const fb = document.getElementById('fb');
+  fb.className = 'feedback-box info';
+  fb.innerHTML = '💡 ' + (q.hint || 'فكري في تسلسل العمليات المنطقي لمعالجة البيانات.');
+  fb.style.display = 'block';
+}
+
+function nextQ() {
+  qIndex++;
+  if (qIndex >= questions.length) showResults();
+  else renderQuestion();
+}
+
+function showResults() {
+  document.getElementById('prog-bar').style.width = '100%';
+  showScreen('screen-results');
+  const correct = answers.filter(a => a.correct).length;
+  const wrong = answers.length - correct;
+  const pct = Math.round(totalScore / 80 * 100);
+  document.getElementById('score-num').textContent = totalScore;
+  document.getElementById('r-correct').textContent = correct;
+  document.getElementById('r-wrong').textContent = wrong;
+  document.getElementById('r-pct').textContent = pct + '%';
+  document.getElementById('live-score').textContent = `النقاط: ${totalScore}`;
+
+  let title, sub;
+  if (pct >= 90) { title = 'أداء استثنائي! 🏆'; sub = 'إتقان كامل لمراحل دورة حياة البيانات. أنت جاهزة للمستوى المتقدم!'; }
+  else if (pct >= 75) { title = 'أداء ممتاز! 🌟'; sub = 'فهم قوي لمراحل دورة حياة البيانات مع بعض النقاط للتحسين.'; }
+  else if (pct >= 60) { title = 'أداء جيد! 👍'; sub = 'فهم جيد بشكل عام، راجعي المراحل التي أخطأتِ فيها لتعزيز فهمك.'; }
+  else { title = 'تحتاجين مزيداً من المراجعة 📚'; sub = 'راجعي مراحل دورة حياة البيانات ثم أعيدي المحاولة.'; }
+
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-sub').textContent = sub;
+
+  const circle = document.getElementById('score-circle');
+  circle.style.borderColor = pct >= 75 ? 'var(--teal)' : pct >= 60 ? 'var(--amber)' : 'var(--rose)';
+  document.getElementById('score-num').style.color = pct >= 75 ? 'var(--teal)' : pct >= 60 ? 'var(--amber)' : 'var(--rose)';
+
+  const rev = document.getElementById('review-list');
+  answers.forEach((a, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `
+      <div class="review-icon">${a.correct ? '✓' : '✗'}</div>
+      <div class="review-q">س${i+1}: ${a.text.substring(0, 60)}${a.text.length > 60 ? '…' : ''}</div>
+      <div class="review-status ${a.correct ? 'status-correct' : 'status-wrong'}">${a.correct ? 'صحيح' : 'خاطئ'}</div>`;
+    rev.appendChild(div);
+  });
+}
+
+function retryQuiz() {
+  document.getElementById('review-list').innerHTML = '';
+  startQuiz();
+}
+
+function shuffleArr(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+</script>
+</body>
+</html>
